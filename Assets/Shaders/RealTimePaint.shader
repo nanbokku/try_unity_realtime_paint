@@ -55,6 +55,8 @@
                 // TODO: ワールド座標を求める
 
                 // float4 clip = float4((o.uv.x) * 2 - 1, (o.uv.y) * 2 - 1, 0, 1);
+
+                // MEMO: RenderTextureだとテクスチャ座標になる
                 float4 clip = float4(o.vertex.xy, 0, 1);
                 o.worldDirection = mul(_ViewProjectionInverse, clip).xyz - _WorldSpaceCameraPos;
 
@@ -74,8 +76,7 @@
                 D = D / D.w;
                 
                 float3 worldPos = D.xyz + _WorldSpaceCameraPos;
-                // return float4(i.worldDirection, 1);
-                return fixed4(depth, depth, depth, 1);
+                return float4(i.worldDirection, 1);
                 return fixed4(i.worldDirection * depth + _WorldSpaceCameraPos, 1);
 
                 float2 uv = TRANSFORM_TEX(i.uv, _MainTex);

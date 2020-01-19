@@ -39,24 +39,24 @@ public class RealTimePaint : MonoBehaviour
 
     void Update()
     {
-        // Paint();
+        Paint();
     }
 
-    void OnRenderImage(RenderTexture src, RenderTexture dest)
-    {
-        paintMaterial.SetVector(paintWorldPositionId, new Vector4(0, 0, 0, 0));
+    // void OnRenderImage(RenderTexture src, RenderTexture dest)
+    // {
+    //     paintMaterial.SetVector(paintWorldPositionId, new Vector4(0, 0, 0, 0));
 
-        // from https://gamedev.stackexchange.com/questions/131978/shader-reconstructing-position-from-depth-in-vr-through-projection-matrix/140924#140924
-        Matrix4x4 projectionMatrix = GL.GetGPUProjectionMatrix(Camera.main.projectionMatrix, false);
-        projectionMatrix[2, 3] = projectionMatrix[3, 2] = 0.0f;
-        projectionMatrix[3, 3] = 1.0f;
+    //     // from https://gamedev.stackexchange.com/questions/131978/shader-reconstructing-position-from-depth-in-vr-through-projection-matrix/140924#140924
+    //     Matrix4x4 projectionMatrix = GL.GetGPUProjectionMatrix(Camera.main.projectionMatrix, false);
+    //     projectionMatrix[2, 3] = projectionMatrix[3, 2] = 0.0f;
+    //     projectionMatrix[3, 3] = 1.0f;
 
-        Matrix4x4 clipToWorld = Matrix4x4.Inverse(projectionMatrix * Camera.main.worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -projectionMatrix[2, 2]), Quaternion.identity, Vector3.one);
-        paintMaterial.SetMatrix(viewProjectionInverseId, clipToWorld);
+    //     Matrix4x4 clipToWorld = Matrix4x4.Inverse(projectionMatrix * Camera.main.worldToCameraMatrix) * Matrix4x4.TRS(new Vector3(0, 0, -projectionMatrix[2, 2]), Quaternion.identity, Vector3.one);
+    //     paintMaterial.SetMatrix(viewProjectionInverseId, clipToWorld);
 
-        // ペイント処理
-        Graphics.Blit(src, dest, paintMaterial);
-    }
+    //     // ペイント処理
+    //     Graphics.Blit(src, dest, paintMaterial);
+    // }
 
     void Paint()
     {
