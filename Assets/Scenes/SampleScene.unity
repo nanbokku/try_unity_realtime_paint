@@ -504,6 +504,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   myRenderer: {fileID: 1581980120}
   paintMap: {fileID: 0}
+  mapMat: {fileID: 2100000, guid: 40eb76054e605ec45b1a61c1a2c29232, type: 2}
 --- !u!64 &1581980119
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -535,7 +536,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 05028551ca67fd847921d0a31b1d46a2, type: 2}
+  - {fileID: 2100000, guid: 40eb76054e605ec45b1a61c1a2c29232, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
