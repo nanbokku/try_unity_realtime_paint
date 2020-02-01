@@ -81,8 +81,7 @@
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
                 // ワールド座標を求める
-                float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
-                o.worldPos = worldPos.xyz;
+                o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
 
                 return o;
             }
@@ -91,8 +90,6 @@
             {   
                 // 参照するindexを取得
                 uint2 index = i.uv * _PrevTex_TexelSize.zw;
-
-                return _PrevTex[index];
 
                 // ペイント点からどれだけ近いかを[-1,1]の範囲で取得
                 float2 nearDegree = howFar2(i.worldPos);
@@ -107,7 +104,7 @@
                 brushColor = brushColor * _PaintColor;
 
                 // 新しい色でテクスチャを塗り替えるか判定
-                int canPaint = lerp(0, isRange(i.worldPos), step(0.0, _PaintWorldPosition.w));
+                int canPaint = isRange(i.worldPos);
 
                 // 塗り替える場合は新しい色を返す
                 if (canPaint == 1) {

@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: RealTimeMapMat_
+  m_Name: RealTimePaintMat__
   m_Shader: {fileID: 4800000, guid: 0a643100e31c5404eb54a57a4f92679f, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4

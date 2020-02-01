@@ -1,40 +1,61 @@
 using UnityEngine;
+using System.Collections;
 
 public class RealTimePaint_ : MonoBehaviour
 {
     [SerializeField]
     private Renderer myRenderer = null;
     private int paintWorldPositionId = 0;
+    private int prevTexId = 0;
+    private int currentTexId = 0;
     /// <summary>
-    /// ペイント点を保持するためのテクスチャ
+    /// 前フレームのテクスチャを参照するためのテクスチャ．
+    /// paintBuffer2と書き込み，読み込み役を毎フレーム交代する．
     /// </summary>
+    private RenderTexture paintBuffer1 = null;
+    /// <summary>
+    /// 前フレームのテクスチャを参照するためのテクスチャ．
+    /// paintBuffer1と書き込み，読み込み役を毎フレーム交代する．
+    /// </summary>
+    private RenderTexture paintBuffer2 = null;
+    /// <summary>
+    /// 偶数フレームで描画されたかどうか
+    /// </summary>
+    private bool isEvenFrameRendered = false;
+    private Vector4 worldPosition = new Vector4(0, 0, 0, -1);
     [SerializeField]
-    private RenderTexture paintMap = null;
+    private Renderer buffer1 = null;
     [SerializeField]
-    private Material mapMat = null;
+    private Renderer buffer2 = null;
 
     void Awake()
     {
         Texture mainTexture = myRenderer.material.mainTexture;
 
-        // PaintMap用のテクスチャを生成
-        paintMap = new RenderTexture(1024, 1024, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);   // RenderTextureFormatはARGB32でなければならないらしい(?:未確認)...型はシェーダーが自動で変換してくれる
-        paintMap.enableRandomWrite = true;
         // paintMap.doubleBuffered = true; // ダブルバッファをONにして，全フレームのテクスチャを参照できるようにする
         // paintMap.initializationMode = CustomRenderTextureUpdateMode.OnLoad;
         // paintMap.initializationTexture = myRenderer.material.mainTexture;
 
-        // paintMapをシェーダーにセット
-        int paintMapId = Shader.PropertyToID("_MapTex");
-        myRenderer.material.SetTexture(paintMapId, paintMap);
+        // 前フレームのテクスチャ参照用
+        paintBuffer1 = new RenderTexture(1024, 1024, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+        paintBuffer2 = new RenderTexture(1024, 1024, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+        paintBuffer1.enableRandomWrite = true;
+        paintBuffer2.enableRandomWrite = true;
 
-        // RWTexture2Dに書き込みを行うために必要
-        Graphics.ClearRandomWriteTargets();
-        Graphics.SetRandomWriteTarget(1, paintMap);
-        Graphics.ClearRandomWriteTargets();
+        // メインテクスチャで初期化
+        Graphics.Blit(mainTexture, paintBuffer1);
+        Graphics.Blit(mainTexture, paintBuffer2);
 
         // 各シェーダープロパティIDを取得
         paintWorldPositionId = Shader.PropertyToID("_PaintWorldPosition");
+        prevTexId = Shader.PropertyToID("_PrevTex");
+        currentTexId = Shader.PropertyToID("_CurrentTex");
+
+        StartCoroutine(UpdateTextureAction());
+
+        // for debug
+        buffer1.material.mainTexture = paintBuffer1;
+        buffer2.material.mainTexture = paintBuffer2;
     }
 
     void Update()
@@ -42,16 +63,65 @@ public class RealTimePaint_ : MonoBehaviour
         Paint();
     }
 
+    public void Paint(Vector3 worldPosition)
+    {
+        worldPosition = new Vector4(worldPosition.x, worldPosition.y, worldPosition.z, 1);
+
+        // TODO: 更新されたあとworldPositionを戻す処理も加える
+    }
+
+    /// <summary>
+    /// リアルタイムペイントを行う．
+    /// </summary>
     void Paint()
     {
-        // // シェーダーにペイントするワールド座標を設定する
-        // myRenderer.material.SetVector(paintWorldPositionId, new Vector4(Random.Range(-5, 5), 0, 0, 1));
+        // シェーダーにペイントするワールド座標を設定する
+        myRenderer.material.SetVector(paintWorldPositionId, worldPosition);
 
-        mapMat.SetVector(paintWorldPositionId, new Vector4(0, 0, 0, 1));
+        if (Time.frameCount % 2 == 0)
+        {
+            // 偶数フレームはpaintBuffer1を保存用，paintBuffer2を書き込み用にする
+            myRenderer.material.SetTexture(prevTexId, paintBuffer1);
+            myRenderer.material.SetTexture(currentTexId, paintBuffer2);
+            isEvenFrameRendered = true;
 
-        RenderTexture tmp = RenderTexture.GetTemporary(paintMap.width, paintMap.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
-        Graphics.Blit(paintMap, tmp, mapMat);
-        Graphics.Blit(tmp, paintMap);
-        RenderTexture.ReleaseTemporary(tmp);
+            // RWTexture2Dに書き込みを行うために必要
+            Graphics.ClearRandomWriteTargets();
+            Graphics.SetRandomWriteTarget(1, paintBuffer2);
+        }
+        else
+        {
+            // 奇数フレームはpaintBuffer2を保存用，paintBuffer1を書き込み用にする
+            myRenderer.material.SetTexture(prevTexId, paintBuffer2);
+            myRenderer.material.SetTexture(currentTexId, paintBuffer1);
+            isEvenFrameRendered = false;
+
+            // RWTexture2Dに書き込みを行うために必要
+            Graphics.ClearRandomWriteTargets();
+            Graphics.SetRandomWriteTarget(1, paintBuffer1);
+        }
+    }
+
+    /// <summary>
+    /// テクスチャを更新する処理
+    /// </summary>
+    /// <returns></returns>
+    IEnumerator UpdateTextureAction()
+    {
+        while (true)
+        {
+            // スクリーン上のレンダリングが完了するまで待つ
+            yield return new WaitForEndOfFrame();
+
+            if (isEvenFrameRendered)
+            {
+                // paintBuffer2に入っている新しい値でpaintBuffer1を更新する．
+                Graphics.Blit(paintBuffer2, paintBuffer1);
+            }
+            else
+            {
+                Graphics.Blit(paintBuffer1, paintBuffer2);
+            }
+        }
     }
 }
