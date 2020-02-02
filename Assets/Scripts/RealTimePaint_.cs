@@ -60,20 +60,19 @@ public class RealTimePaint_ : MonoBehaviour
 
     void Update()
     {
-        Paint();
+        // Updateメソッドはレンダリング前に実行されるため，必要なデータはここでセットする．
+        UpdatePaint();
     }
 
     public void Paint(Vector3 worldPosition)
     {
-        worldPosition = new Vector4(worldPosition.x, worldPosition.y, worldPosition.z, 1);
-
-        // TODO: 更新されたあとworldPositionを戻す処理も加える
+        this.worldPosition = new Vector4(worldPosition.x, worldPosition.y, worldPosition.z, 1);
     }
 
     /// <summary>
     /// リアルタイムペイントを行う．
     /// </summary>
-    void Paint()
+    void UpdatePaint()
     {
         // シェーダーにペイントするワールド座標を設定する
         myRenderer.material.SetVector(paintWorldPositionId, worldPosition);
@@ -122,6 +121,9 @@ public class RealTimePaint_ : MonoBehaviour
             {
                 Graphics.Blit(paintBuffer1, paintBuffer2);
             }
+
+            // 次フレームではペイントしないようにするための処理
+            worldPosition.w = -1;
         }
     }
 }

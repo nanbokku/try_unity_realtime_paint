@@ -86,6 +86,7 @@
                 return o;
             }
 
+            // TODO: 微妙に色塗りの境界線が見えてしまう
             fixed4 frag (v2f i) : SV_Target
             {   
                 // 参照するindexを取得
@@ -98,19 +99,19 @@
                 float2 brushUV = (nearDegree + float2(1,1)) / 2.0;
                 brushUV = TRANSFORM_TEX(brushUV, _BrushTex);
 
-                // 各色を取得
-                fixed4 mainColor = tex2D(_MainTex, i.uv);
+                // ペイント色を取得
                 fixed4 brushColor = tex2D(_BrushTex, brushUV);
                 brushColor = brushColor * _PaintColor;
 
                 // 新しい色でテクスチャを塗り替えるか判定
-                int canPaint = isRange(i.worldPos);
+                // _PaintWorldPosition.wが0以上の場合にペイント
+                int canPaint = lerp(0, isRange(i.worldPos), step(0, _PaintWorldPosition.w));
 
                 // 塗り替える場合は新しい色を返す
                 if (canPaint == 1) {
                     half alpha = brushColor.w;
                     fixed4 col = (1 - alpha) * _PrevTex[index] + alpha * brushColor;
-                    
+
                     // 新しい値を保存
                     _CurrentTex[index] = col;
 
