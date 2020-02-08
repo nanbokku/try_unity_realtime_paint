@@ -171,7 +171,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 83e4c48aef02ebc46827d5d4de7b7307, type: 2}
+  - {fileID: 2100000, guid: ca3074a4f6878ea4fbbf088d2d8a13f5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -207,7 +207,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 632243124}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.49, y: -0.1, z: 0}
+  m_LocalPosition: {x: -0.1, y: 0.1, z: 0}
   m_LocalScale: {x: 10, y: 10, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -226,8 +226,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   myRenderer: {fileID: 632243126}
-  uvToWorldPositionMat: {fileID: 2100000, guid: 428bb12ffd9ce7049a2535a50b07034d,
-    type: 2}
+  myMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  paintMat: {fileID: 2100000, guid: 6e088dd2c7e7cd2408c939eea7bd3e97, type: 2}
+  vertexMapMat: {fileID: 2100000, guid: f96b0fd114886ec45ab7f2c4f40f18a2, type: 2}
   buffer: {fileID: 774733371}
 --- !u!1 &705507993
 GameObject:

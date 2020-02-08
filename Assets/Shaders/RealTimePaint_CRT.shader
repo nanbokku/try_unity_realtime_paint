@@ -15,41 +15,76 @@
         Pass
         {
             CGPROGRAM
-            #pragma vertex CustomRenderTextureVertexShader
+            #pragma vertex vert
             #pragma fragment frag
 
             #include "UnityCustomRenderTexture.cginc"
+            #include "UnityCG.cginc"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
             sampler2D _BrushTex;
             float4 _BrushTex_ST;
+            sampler _VertexMap; // 頂点座標マップ
+            float4 _VertexMap_ST;
             float4 _PaintColor;
             float _BrushRadius;
             float4 _PaintWorldPosition; // ペイントする座標
+            fixed4x4 _ObjectToWorldMatrix;  // unity_ObjectToWorldの代わり
 
+            struct appdata
+            {
+                float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            struct v2f
+            {
+                float2 uv : TEXCOORD0;
+                float4 vertex : SV_POSITION;
+            };
+
+            /// 描画範囲に含まれているか
             int isRange(float3 worldPos)
             {
                 fixed dist = distance(_PaintWorldPosition.xyz, worldPos);
+                
+                return step(dist, _BrushRadius);
             }
 
-            fixed4 frag (v2f_customrendertexture i) : SV_Target
+            v2f vert (appdata v)
             {
-                float du = 1.0 / _CustomRenderTextureWidth;
-                float dv = 1.0 / _CustomRenderTextureHeight;
-                float2 uv = i.globalTexcoord;
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = v.uv;
+                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
-                return mul(unity_ObjectToWorld, float4(uv, 0, 1));
+                return o;
+            }
 
-                float x = (_CustomRenderTextureWidth / 2.0 + 5) * du;
-                float y = (_CustomRenderTextureHeight / 2.0 + 10) * dv;
-                float dist = distance(float2(x,y), uv);
+            fixed4 frag (v2f i) : SV_Target
+            {
+                // 前フレームのテクスチャを参照する
+                float4 lastCol = tex2D(_SelfTexture2D, i.uv);
 
-                int paint = step(dist, 0.5);
-                return lerp(float4(1,1,1,1), _PaintColor, paint);
+                // 頂点座標を取得する
+                float4 meshCrd = tex2D(_VertexMap, i.uv);
 
-                fixed4 col = tex2D(_SelfTexture2D, uv);
-                return col;
+                // 頂点座標からワールド座標を取得する
+                float3 worldPos = mul(_ObjectToWorldMatrix, float4(meshCrd.xyz, 1)).xyz;
+
+                // TODO: ここの出力がおかしい．二値化しない
+                fixed dist = distance(i.uv, float2(0.5,0.5));
+                return lerp(float4(0,0,0,1), float4(1,0,0,1), step(dist, 0.25));
+                // return float4(worldPos, 1);
+
+                int canPaint = lerp(0, isRange(worldPos), step(0, _PaintWorldPosition.w));
+
+                if (canPaint != 1) {
+                    return lastCol;
+                }
+
+                return lerp(lastCol, _PaintColor, isRange(worldPos));
             }
             ENDCG
         }
