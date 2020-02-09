@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 632243125}
   - component: {fileID: 632243129}
   m_Layer: 0
-  m_Name: RealTimePaintTest (1)
+  m_Name: RealTimePaintCRTTest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -334,7 +334,7 @@ GameObject:
   - component: {fileID: 774733371}
   - component: {fileID: 774733370}
   m_Layer: 0
-  m_Name: buffer1 (1)
+  m_Name: buffer1_CRT
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

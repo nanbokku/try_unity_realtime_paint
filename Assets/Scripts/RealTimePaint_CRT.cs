@@ -18,8 +18,6 @@ public class RealTimePaint_CRT : MonoBehaviour
     /// </summary>
     [SerializeField]
     private Material vertexMapMat = null;
-    [SerializeField]
-    private Renderer buffer = null;
     /// <summary>
     /// 頂点座標マップ
     /// </summary>
@@ -36,14 +34,25 @@ public class RealTimePaint_CRT : MonoBehaviour
     private int paintWorldPositionId = 0;
     private int objectToWorldMatrixId = 0;
     private int vertexMapId = 0;
+    [SerializeField]
+    private Renderer buffer = null;
 
     void Start()
     {
         Texture mainTexture = myRenderer.material.mainTexture;
+        int width = mainTexture.width;
+        int height = mainTexture.height;
+
+        // NOTE: ある程度テクスチャのサイズが大きくないとその後の描画が変になる
+        if (width < 1024 || height < 1024)
+        {
+            width = height = 1024;
+        }
 
         // ペイント用テクスチャの作成
-        paintTexture = new CustomRenderTexture(mainTexture.width, mainTexture.height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
-        paintTexture.enableRandomWrite = true;
+        paintTexture = new CustomRenderTexture(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+        paintTexture.initializationMode = CustomRenderTextureUpdateMode.OnLoad;
+        paintTexture.initializationTexture = mainTexture;
         paintTexture.doubleBuffered = true;
 
         // ペイントテクスチャの初期化，メインテクスチャへ設定
@@ -52,12 +61,12 @@ public class RealTimePaint_CRT : MonoBehaviour
         myRenderer.material.SetTexture(mainTexId, paintTexture);
 
         // 頂点座標を保持するテクスチャの作成
-        vertexMap = new RenderTexture(mainTexture.width, mainTexture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default)
+        // NOTE: 負の値をRenderTextureに記述するためにformatはfloat,あるいはhalfでなければならない．
+        vertexMap = new RenderTexture(width, height, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Default)
         {
             // ピクセルを一つ一つブロックのように表示する
             filterMode = FilterMode.Point,
         };
-        vertexMap.enableRandomWrite = true;
 
         // 各種シェーダープロパティIDを更新
         paintWorldPositionId = Shader.PropertyToID("_PaintWorldPosition");
@@ -69,13 +78,24 @@ public class RealTimePaint_CRT : MonoBehaviour
 
         // for debug
         buffer.material.mainTexture = vertexMap;
-        paintPosition = new Vector4(0, 0, 0, 1);
     }
 
     void Update()
     {
-        // if (Input.GetMouseButton(0))
-        UpdateRenderTexture();
+        if (!Input.GetMouseButton(0)) return;
+
+        var screenPos = Input.mousePosition;
+        var ray = Camera.main.ScreenPointToRay(screenPos);
+
+        RaycastHit hit;
+        bool isHit = Physics.Raycast(ray, out hit);
+
+        if (!isHit) return;
+
+        paintPosition = new Vector4(hit.point.x, hit.point.y, hit.point.z, 1);
+        Debug.Log(hit.point);
+
+        UpdatePaintTexture();
     }
 
     /// <summary>
@@ -86,17 +106,17 @@ public class RealTimePaint_CRT : MonoBehaviour
         // DrawMeshNow()の前に使用するシェーダーパスを指定する
         vertexMapMat.SetPass(0);
 
-        // Define translation, rotation and scaling matrix 
-        Matrix4x4 trs = Matrix4x4.TRS(Vector3.zero, this.transform.rotation, this.transform.localScale);
-
         // メッシュを描画
         Graphics.SetRenderTarget(vertexMap);
-        Graphics.DrawMeshNow(myMesh, trs);
+        Graphics.DrawMeshNow(myMesh, Matrix4x4.identity);
     }
 
-    private void UpdateRenderTexture()
+    /// <summary>
+    /// ペイント用テクスチャを更新する
+    /// </summary>
+    private void UpdatePaintTexture()
     {
-        paintMat.SetMatrix(objectToWorldMatrixId, this.transform.localToWorldMatrix);
+        paintMat.SetMatrix(objectToWorldMatrixId, myRenderer.localToWorldMatrix);
         paintMat.SetVector(paintWorldPositionId, paintPosition);
         paintMat.SetTexture(vertexMapId, vertexMap);
 

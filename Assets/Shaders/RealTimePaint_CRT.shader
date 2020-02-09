@@ -30,7 +30,7 @@
             float4 _PaintColor;
             float _BrushRadius;
             float4 _PaintWorldPosition; // ペイントする座標
-            fixed4x4 _ObjectToWorldMatrix;  // unity_ObjectToWorldの代わり
+            float4x4 _ObjectToWorldMatrix;  // unity_ObjectToWorldの代わり
 
             struct appdata
             {
@@ -52,11 +52,23 @@
                 return step(dist, _BrushRadius);
             }
 
+            /// どの程度離れているかを2次元座標で示す
+            float2 howFar2(float3 worldPos)
+            {
+                fixed dist = distance(_PaintWorldPosition.xyz, worldPos);
+                fixed ratio = dist / _BrushRadius;
+                float far = saturate(ratio);    // 0~1にクランプ
+                fixed3 diff = worldPos - _PaintWorldPosition.xyz;
+
+                // xy平面の成分
+                half2 elem = dot(half2(1,1), diff);
+                return far * sign(elem);
+            }
+
             v2f vert (appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = v.uv;
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
                 return o;
@@ -64,6 +76,8 @@
 
             fixed4 frag (v2f i) : SV_Target
             {
+                // TODO: 前フレーム情報を参照できていない？
+                // NOTE: おそらくCustomRenderTexture.materialに参照するシェーダーをセットしなければならない？
                 // 前フレームのテクスチャを参照する
                 float4 lastCol = tex2D(_SelfTexture2D, i.uv);
 
@@ -73,18 +87,22 @@
                 // 頂点座標からワールド座標を取得する
                 float3 worldPos = mul(_ObjectToWorldMatrix, float4(meshCrd.xyz, 1)).xyz;
 
-                // TODO: ここの出力がおかしい．二値化しない
-                fixed dist = distance(i.uv, float2(0.5,0.5));
-                return lerp(float4(0,0,0,1), float4(1,0,0,1), step(dist, 0.25));
-                // return float4(worldPos, 1);
+                // ペイント点からどれだけ近いかを[-1,1]の範囲で取得
+                float2 nearDegree = -1 * howFar2(worldPos);
 
-                int canPaint = lerp(0, isRange(worldPos), step(0, _PaintWorldPosition.w));
+                // brushTex用のUV座標を計算する
+                float2 brushUV = (nearDegree + float2(1,1)) / 2.0;
+                brushUV = TRANSFORM_TEX(brushUV, _BrushTex);
 
-                if (canPaint != 1) {
-                    return lastCol;
-                }
+                // ペイント色を取得
+                fixed4 brushColor = tex2D(_BrushTex, brushUV);
+                brushColor = brushColor * _PaintColor;
+                half alpha = brushColor.a;
+                
+                // ブレンドした色
+                fixed4 blendedColor = (1 - alpha) * lastCol + alpha * brushColor;
 
-                return lerp(lastCol, _PaintColor, isRange(worldPos));
+                return lerp(lastCol, blendedColor, isRange(worldPos));
             }
             ENDCG
         }
