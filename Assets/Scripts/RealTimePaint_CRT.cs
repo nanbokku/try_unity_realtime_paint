@@ -51,12 +51,20 @@ public class RealTimePaint_CRT : MonoBehaviour
 
         // ペイント用テクスチャの作成
         paintTexture = new CustomRenderTexture(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
-        paintTexture.initializationMode = CustomRenderTextureUpdateMode.OnLoad;
-        paintTexture.initializationTexture = mainTexture;
+        paintTexture.material = paintMat;   // paintMatに応じて更新される
+        paintTexture.initializationSource = CustomRenderTextureInitializationSource.TextureAndColor;
+        // TODO: 初期化用テクスチャを設定すると黒くなる?
+        // paintTexture.initializationTexture = mainTexture;
+        paintTexture.initializationColor = Color.white;
+        paintTexture.initializationMode = CustomRenderTextureUpdateMode.OnDemand;   // スクリプトに応じて初期化
+        paintTexture.updateMode = CustomRenderTextureUpdateMode.OnDemand;   // スクリプトに応じて更新
         paintTexture.doubleBuffered = true;
+        paintTexture.Create();
+        paintTexture.Initialize();
+        // TODO: 初期化に時間がかかる気がする．初期化完了前にUpdateすると変
 
         // ペイントテクスチャの初期化，メインテクスチャへ設定
-        Graphics.Blit(mainTexture, paintTexture);
+        // Graphics.Blit(mainTexture, paintTexture);
         int mainTexId = Shader.PropertyToID("_MainTex");
         myRenderer.material.SetTexture(mainTexId, paintTexture);
 
@@ -120,9 +128,11 @@ public class RealTimePaint_CRT : MonoBehaviour
         paintMat.SetVector(paintWorldPositionId, paintPosition);
         paintMat.SetTexture(vertexMapId, vertexMap);
 
-        RenderTexture tmp = RenderTexture.GetTemporary(paintTexture.descriptor);
-        Graphics.Blit(paintTexture, tmp);
-        Graphics.Blit(tmp, paintTexture, paintMat);
-        RenderTexture.ReleaseTemporary(tmp);
+        paintTexture.Update(1);
+
+        // RenderTexture tmp = RenderTexture.GetTemporary(paintTexture.descriptor);
+        // Graphics.Blit(paintTexture, tmp);
+        // Graphics.Blit(tmp, paintTexture, paintMat);
+        // RenderTexture.ReleaseTemporary(tmp);
     }
 }

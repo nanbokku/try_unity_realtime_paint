@@ -15,11 +15,11 @@
         Pass
         {
             CGPROGRAM
-            #pragma vertex vert
+            #pragma vertex CustomRenderTextureVertexShader
             #pragma fragment frag
 
             #include "UnityCustomRenderTexture.cginc"
-            #include "UnityCG.cginc"
+            // #include "UnityCG.cginc"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
@@ -32,17 +32,17 @@
             float4 _PaintWorldPosition; // ペイントする座標
             float4x4 _ObjectToWorldMatrix;  // unity_ObjectToWorldの代わり
 
-            struct appdata
-            {
-                float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-            };
+            // struct appdata
+            // {
+            //     float4 vertex : POSITION;
+            //     float2 uv : TEXCOORD0;
+            // };
 
-            struct v2f
-            {
-                float2 uv : TEXCOORD0;
-                float4 vertex : SV_POSITION;
-            };
+            // struct v2f
+            // {
+            //     float2 uv : TEXCOORD0;
+            //     float4 vertex : SV_POSITION;
+            // };
 
             /// 描画範囲に含まれているか
             int isRange(float3 worldPos)
@@ -65,24 +65,23 @@
                 return far * sign(elem);
             }
 
-            v2f vert (appdata v)
-            {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+            // v2f vert (appdata v)
+            // {
+            //     v2f o;
+            //     o.vertex = UnityObjectToClipPos(v.vertex);
+            //     o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
-                return o;
-            }
+            //     return o;
+            // }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag (v2f_customrendertexture i) : SV_Target
             {
-                // TODO: 前フレーム情報を参照できていない？
-                // NOTE: おそらくCustomRenderTexture.materialに参照するシェーダーをセットしなければならない？
+                // NOTE: CustomRenderTextureの初期化コードは既存のものでないといけない
                 // 前フレームのテクスチャを参照する
-                float4 lastCol = tex2D(_SelfTexture2D, i.uv);
+                float4 lastCol = tex2D(_SelfTexture2D, i.globalTexcoord);
 
                 // 頂点座標を取得する
-                float4 meshCrd = tex2D(_VertexMap, i.uv);
+                float4 meshCrd = tex2D(_VertexMap, i.globalTexcoord);
 
                 // 頂点座標からワールド座標を取得する
                 float3 worldPos = mul(_ObjectToWorldMatrix, float4(meshCrd.xyz, 1)).xyz;
@@ -98,7 +97,7 @@
                 fixed4 brushColor = tex2D(_BrushTex, brushUV);
                 brushColor = brushColor * _PaintColor;
                 half alpha = brushColor.a;
-                
+
                 // ブレンドした色
                 fixed4 blendedColor = (1 - alpha) * lastCol + alpha * brushColor;
 
