@@ -13,7 +13,7 @@ I can update texture in realtime using `CustomRenderTexture`.
 Realtime texture paint is implemented in two ways.
 
 - using `RenderTexture` and computing world coordinates directly
-- using `CustomRenderTexture` and computing world coordinates by output vertex map in advance
+- using `CustomRenderTexture` and computing world coordinates by vertex map output in advance
 
 # Requirement
 
