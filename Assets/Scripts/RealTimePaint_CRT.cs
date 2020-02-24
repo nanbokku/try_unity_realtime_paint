@@ -35,11 +35,12 @@ public class RealTimePaint_CRT : MonoBehaviour
     private int objectToWorldMatrixId = 0;
     private int vertexMapId = 0;
     [SerializeField]
-    private Renderer buffer = null;
+    private Renderer buffer = null; // デバッグ用
 
     void Start()
     {
         Texture mainTexture = myRenderer.material.mainTexture;
+        Debug.Log(mainTexture);
         int width = mainTexture.width;
         int height = mainTexture.height;
 
@@ -50,21 +51,20 @@ public class RealTimePaint_CRT : MonoBehaviour
         }
 
         // ペイント用テクスチャの作成
-        paintTexture = new CustomRenderTexture(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
-        paintTexture.material = paintMat;   // paintMatに応じて更新される
-        paintTexture.initializationSource = CustomRenderTextureInitializationSource.TextureAndColor;
-        // TODO: 初期化用テクスチャを設定すると黒くなる?
-        // paintTexture.initializationTexture = mainTexture;
-        paintTexture.initializationColor = Color.white;
-        paintTexture.initializationMode = CustomRenderTextureUpdateMode.OnDemand;   // スクリプトに応じて初期化
-        paintTexture.updateMode = CustomRenderTextureUpdateMode.OnDemand;   // スクリプトに応じて更新
-        paintTexture.doubleBuffered = true;
+        paintTexture = new CustomRenderTexture(width, height, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default)
+        {
+            material = paintMat,    // paintMatに応じて更新される
+            initializationSource = CustomRenderTextureInitializationSource.TextureAndColor,
+            initializationTexture = mainTexture,
+            initializationColor = Color.white,
+            initializationMode = CustomRenderTextureUpdateMode.OnDemand,    // スクリプトに応じて初期化
+            updateMode = CustomRenderTextureUpdateMode.OnDemand,    // スクリプトに応じて更新
+            doubleBuffered = true
+        };
         paintTexture.Create();
         paintTexture.Initialize();
-        // TODO: 初期化に時間がかかる気がする．初期化完了前にUpdateすると変
 
-        // ペイントテクスチャの初期化，メインテクスチャへ設定
-        // Graphics.Blit(mainTexture, paintTexture);
+        // メインテクスチャへ設定
         int mainTexId = Shader.PropertyToID("_MainTex");
         myRenderer.material.SetTexture(mainTexId, paintTexture);
 
@@ -100,8 +100,16 @@ public class RealTimePaint_CRT : MonoBehaviour
 
         if (!isHit) return;
 
-        paintPosition = new Vector4(hit.point.x, hit.point.y, hit.point.z, 1);
-        Debug.Log(hit.point);
+        Paint(hit.point);
+    }
+
+    /// <summary>
+    /// 任意の座標にペイントする
+    /// </summary>
+    /// <param name="worldPosition">ペイントする座標</param>
+    public void Paint(Vector3 worldPosition)
+    {
+        this.paintPosition = new Vector4(worldPosition.x, worldPosition.y, worldPosition.z, 1);
 
         UpdatePaintTexture();
     }
@@ -129,10 +137,5 @@ public class RealTimePaint_CRT : MonoBehaviour
         paintMat.SetTexture(vertexMapId, vertexMap);
 
         paintTexture.Update(1);
-
-        // RenderTexture tmp = RenderTexture.GetTemporary(paintTexture.descriptor);
-        // Graphics.Blit(paintTexture, tmp);
-        // Graphics.Blit(tmp, paintTexture, paintMat);
-        // RenderTexture.ReleaseTemporary(tmp);
     }
 }

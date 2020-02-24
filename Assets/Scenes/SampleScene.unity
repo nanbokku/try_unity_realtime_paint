@@ -44,7 +44,7 @@ RenderSettings:
 LightmapSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 11
-  m_GIWorkflowMode: 0
+  m_GIWorkflowMode: 1
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -96,7 +96,8 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaAO: 1
     m_ShowResolutionOverlay: 1
     m_ExportTrainingData: 0
-  m_LightingDataAsset: {fileID: 0}
+  m_LightingDataAsset: {fileID: 112000000, guid: 874ad3cc0bf99f749bbc562e7646d68b,
+    type: 2}
   m_UseShadowmask: 1
 --- !u!196 &4
 NavMeshSettings:
@@ -228,8 +229,10 @@ MonoBehaviour:
   myRenderer: {fileID: 632243126}
   myMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   paintMat: {fileID: 2100000, guid: 6e088dd2c7e7cd2408c939eea7bd3e97, type: 2}
+  crtInitMat: {fileID: 2100000, guid: 0488b7fe09f7fa9478ddc18682effcba, type: 2}
   vertexMapMat: {fileID: 2100000, guid: f96b0fd114886ec45ab7f2c4f40f18a2, type: 2}
   buffer: {fileID: 774733371}
+  crt: {fileID: 8600000, guid: b82e0275d625c4f469e3acf3012e48c0, type: 2}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -699,7 +702,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1581980118
 MonoBehaviour:
   m_ObjectHideFlags: 0

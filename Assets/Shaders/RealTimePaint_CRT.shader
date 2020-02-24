@@ -2,7 +2,6 @@
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
         _BrushTex ("Brush Texture", 2D) = "white" {}    // ペイント用テクスチャ
         _PaintColor ("Paint Color", Color) = (1,1,1,1)  // ペイント色
         _BrushRadius ("Brush Radius", Float) = 5    // ペイント範囲
@@ -19,10 +18,7 @@
             #pragma fragment frag
 
             #include "UnityCustomRenderTexture.cginc"
-            // #include "UnityCG.cginc"
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
             sampler2D _BrushTex;
             float4 _BrushTex_ST;
             sampler _VertexMap; // 頂点座標マップ
@@ -31,18 +27,6 @@
             float _BrushRadius;
             float4 _PaintWorldPosition; // ペイントする座標
             float4x4 _ObjectToWorldMatrix;  // unity_ObjectToWorldの代わり
-
-            // struct appdata
-            // {
-            //     float4 vertex : POSITION;
-            //     float2 uv : TEXCOORD0;
-            // };
-
-            // struct v2f
-            // {
-            //     float2 uv : TEXCOORD0;
-            //     float4 vertex : SV_POSITION;
-            // };
 
             /// 描画範囲に含まれているか
             int isRange(float3 worldPos)
@@ -65,23 +49,15 @@
                 return far * sign(elem);
             }
 
-            // v2f vert (appdata v)
-            // {
-            //     v2f o;
-            //     o.vertex = UnityObjectToClipPos(v.vertex);
-            //     o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-
-            //     return o;
-            // }
-
             fixed4 frag (v2f_customrendertexture i) : SV_Target
             {
                 // NOTE: CustomRenderTextureの初期化コードは既存のものでないといけない
                 // 前フレームのテクスチャを参照する
-                float4 lastCol = tex2D(_SelfTexture2D, i.globalTexcoord);
+                float2 uv = i.globalTexcoord;
+                float4 lastCol = tex2D(_SelfTexture2D, uv);
 
                 // 頂点座標を取得する
-                float4 meshCrd = tex2D(_VertexMap, i.globalTexcoord);
+                float4 meshCrd = tex2D(_VertexMap, uv);
 
                 // 頂点座標からワールド座標を取得する
                 float3 worldPos = mul(_ObjectToWorldMatrix, float4(meshCrd.xyz, 1)).xyz;
